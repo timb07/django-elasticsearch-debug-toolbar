@@ -19,10 +19,19 @@ def patched_log_request_success(self, method, full_url, path, body, status_code,
 Connection.log_request_success = patched_log_request_success
 
 
+def truncate_data(dct):
+    for k, v in dct.items():
+        if isinstance(v, list) and len(v) > 10:
+            dct[k] = v[:10] + ['<truncated...>']
+        elif isinstance(v, str) and len(v) > 1000:
+            dct[k] = v[:1000] + ' <truncated...>'
+    return dct
+
+
 def _pretty_json(data):
     # pretty JSON in tracer curl logs
     try:
-        return json.dumps(json.loads(data), sort_keys=True, indent=2, separators=(',', ': ')).replace("'", r'\u0027')
+        return json.dumps(json.loads(data, object_hook=truncate_data), sort_keys=True, indent=2, separators=(',', ': ')).replace("'", r'\u0027')
     except (ValueError, TypeError):
         # non-json data or a bulk request
         return data
